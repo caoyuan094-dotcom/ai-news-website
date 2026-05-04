@@ -287,6 +287,135 @@
                 flex-wrap: nowrap;
             }
         }
+
+        /* 新闻详情模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            margin-bottom: 30px;
+            padding-right: 50px;
+        }
+
+        .modal-category {
+            display: inline-block;
+            padding: 6px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 2em;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .modal-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .modal-body {
+            line-height: 1.8;
+            color: #444;
+            font-size: 16px;
+        }
+
+        .modal-body p {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .share-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .share-btn:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -340,6 +469,27 @@
 
         <div class="footer">
             <p>© 2024 AI时事 | 数据每小时自动更新</p>
+        </div>
+    </div>
+
+    <!-- 新闻详情模态框 -->
+    <div class="modal-overlay" id="newsModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div class="modal-header">
+                <span class="modal-category" id="modalCategory"></span>
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <div class="modal-meta">
+                    <span id="modalTime"></span>
+                    <span id="modalReadTime"></span>
+                    <span id="modalViews"></span>
+                </div>
+            </div>
+            <div class="modal-body" id="modalBody">
+            </div>
+            <div class="modal-footer">
+                <button class="share-btn" onclick="shareNews()">📤 分享文章</button>
+            </div>
         </div>
     </div>
 
@@ -397,6 +547,77 @@
 
         let currentCategory = 'all';
         let filteredNews = [...newsData];
+        let currentNewsId = null;
+
+        // 生成详细的新闻内容
+        function generateFullContent(news) {
+            const paragraphs = [
+                news.summary,
+                `【详细报道】${news.title}引起了业界的广泛关注。根据最新消息，这一进展将对整个AI行业产生深远影响。`,
+                `专家指出，这项技术突破标志着人工智能领域的一个重要里程碑。来自全球的研究团队都在密切关注这一发展，并期待看到更多实际应用案例。`,
+                `从技术角度来看，这次更新带来了多项重要改进。首先在性能方面有了显著提升，其次在用户体验上也做了大量优化工作。开发团队表示，他们将继续投入资源进行后续研发。`,
+                `市场反应积极，多家知名企业已经表示有意向采用这项新技术。分析师预测，这将在未来几个月内推动相关领域的快速发展。`,
+                `值得注意的是，这次发布还伴随着完善的文档和支持体系。开发者可以快速上手，并将其集成到现有的工作流程中。`,
+                `展望未来，我们期待看到更多基于这项技术的创新应用。随着生态系统的不断完善，AI技术的应用场景将进一步拓展。`
+            ];
+            
+            return paragraphs.map(p => `<p>${p}</p>`).join('\n');
+        }
+
+        // 打开模态框
+        function openModal(news) {
+            currentNewsId = news.id;
+            document.getElementById('modalCategory').textContent = news.categoryName;
+            document.getElementById('modalTitle').textContent = news.title;
+            document.getElementById('modalTime').textContent = '📅 ' + news.time;
+            document.getElementById('modalReadTime').textContent = '⏱️ 阅读时间: ' + news.readTime;
+            document.getElementById('modalViews').textContent = '👁️ 浏览量: ' + Math.floor(Math.random() * 5000 + 1000);
+            document.getElementById('modalBody').innerHTML = generateFullContent(news);
+            document.getElementById('newsModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('newsModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            currentNewsId = null;
+        }
+
+        // 点击模态框背景关闭
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('newsModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        });
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 分享功能
+        function shareNews() {
+            if (navigator.share && currentNewsId) {
+                const news = newsData.find(n => n.id === currentNewsId);
+                navigator.share({
+                    title: news.title,
+                    text: news.summary,
+                    url: window.location.href
+                }).catch(err => console.log('分享失败:', err));
+            } else {
+                // 复制链接到剪贴板
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('链接已复制到剪贴板！');
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                });
+            }
+        }
 
         function init() {
             renderNews(newsData);
@@ -415,6 +636,7 @@
             const card = document.createElement('div');
             card.className = 'news-card';
             card.style.animationDelay = `${index * 0.05}s`;
+            card.onclick = () => openModal(news);
             card.innerHTML = `
                 ${news.isNew ? '<span class="badge-new">NEW</span>' : ''}
                 <div class="news-header">
