@@ -1,0 +1,176 @@
+name: Daily AI News Update
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 每天UTC 22:00 (北京时间6:00)
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 feedparser python-dateutil
+          
+      - name: Create scripts directory
+        run: mkdir -p scripts
+        
+      - name: Create news fetcher script
+        run: |
+          cat > scripts/fetch_ai_news.py << 'PYTHON_SCRIPT'
+          import requests
+          import feedparser
+          import json
+          from datetime import datetime, timedelta
+          from bs4 import BeautifulSoup
+          import re
+          
+          def fetch_hackernews():
+              """从Hacker News获取AI相关新闻"""
+              try:
+                  # 使用HN API获取top stories
+                  url = "https://hacker-news.firebaseio.com/v0/topstories.json"
+                  response = requests.get(url, timeout=10)
+                  story_ids = response.json()[:30]  # 取前30条
+                  
+                  news_items = []
+                  for story_id in story_ids[:10]:  # 处理前10条
+                      try:
+                          story_url = f"https://hacker-news.firebaseio.com/v0/item/{story_id}.json"
+                          story = requests.get(story_url, timeout=5).json()
+                          
+                          # 检查是否包含AI相关关键词
+                          title = story.get('title', '')
+                          ai_keywords = ['ai', 'artificial intelligence', 'machine learning', 
+                                       'gpt', 'llm', 'openai', 'claude', 'llama']
+                          
+                          if any(keyword in title.lower() for keyword in ai_keywords):
+                              news_items.append({
+                                  'title': title,
+                                  'link': story.get('url', ''),
+                                  'source': 'Hacker News',
+                                  'time': datetime.fromtimestamp(story.get('time', 0)).strftime('%H小时前'),
+                                  'category': '大模型' if any(k in title.lower() for k in ['gpt', 'llm', 'llama']) else 'AI应用'
+                              })
+                      except:
+                          continue
+                  
+                  return news_items
+              except Exception as e:
+                  print(f"Hacker News fetch error: {e}")
+                  return []
+          
+          def fetch_arxiv():
+              """从arXiv获取最新AI论文"""
+              try:
+                  feed = feedparser.parse('http://export.arxiv.org/rss/cs.AI')
+                  news_items = []
+                  
+                  for entry in feed.entries[:5]:
+                      news_items.append({
+                          'title': entry.title,
+                          'link': entry.link,
+                          'source': 'arXiv',
+                          'time': '今日',
+                          'category': '学术研究',
+                          'excerpt': entry.summary[:200] + '...' if hasattr(entry, 'summary') else ''
+                      })
+                  
+                  return news_items
+              except Exception as e:
+                  print(f"arXiv fetch error: {e}")
+                  return []
+          
+          def fetch_techcrunch():
+              """从TechCrunch获取AI新闻"""
+              try:
+                  feed = feedparser.parse('https://techcrunch.com/category/artificial-intelligence/feed/')
+                  news_items = []
+                  
+                  for entry in feed.entries[:5]:
+                      news_items.append({
+                          'title': entry.title,
+                          'link': entry.link,
+                          'source': 'TechCrunch',
+                          'time': '今日',
+                          'category': '行业动态'
+                      })
+                  
+                  return news_items
+              except Exception as e:
+                  print(f"TechCrunch fetch error: {e}")
+                  return []
+          
+          def generate_html(news_data):
+              """生成更新后的HTML文件"""
+              # 读取现有模板
+              with open('index.html', 'r', encoding='utf-8') as f:
+                  html_content = f.read()
+              
+              # 将新闻数据转换为JavaScript数组格式
+              news_json = json.dumps(news_data, ensure_ascii=False, indent=2)
+              
+              # 替换新闻数据部分
+              pattern = r'const newsData = \[.*?\];'
+              replacement = f'const newsData = {news_json};'
+              
+              updated_html = re.sub(pattern, replacement, html_content, flags=re.DOTALL)
+              
+              # 写入更新后的文件
+              with open('index.html', 'w', encoding='utf-8') as f:
+                  f.write(updated_html)
+              
+              print(f"Updated {len(news_data)} news items")
+          
+          def main():
+              print("Fetching AI news from multiple sources...")
+              
+              all_news = []
+              
+              # 从多个源获取新闻
+              all_news.extend(fetch_hackernews())
+              all_news.extend(fetch_arxiv())
+              all_news.extend(fetch_techcrunch())
+              
+              # 去重（基于标题）
+              seen_titles = set()
+              unique_news = []
+              for item in all_news:
+                  if item['title'] not in seen_titles:
+                      seen_titles.add(item['title'])
+                      unique_news.append(item)
+              
+              # 如果获取的新闻太少，保留原有数据作为补充
+              if len(unique_news) < 5:
+                  print("Warning: Not enough new news, keeping existing data")
+                  return
+              
+              # 生成HTML
+              generate_html(unique_news)
+              
+              print(f"Successfully fetched {len(unique_news)} unique news items")
+          
+          if __name__ == '__main__':
+              main()
+          PYTHON_SCRIPT
+          
+      - name: Fetch and update news
+        run: python scripts/fetch_ai_news.py
+        
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add index.html
+          git diff --staged --quiet || git commit -m "🤖 Auto-update: Daily AI news $(date '+%Y-%m-%d %H:%M UTC')"
+          git push
