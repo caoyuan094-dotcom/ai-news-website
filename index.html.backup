@@ -413,34 +413,6 @@
             opacity: 1;
         }
 
-        /* Date Filter Tabs */
-        .date-filter {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .date-btn {
-            padding: 10px 20px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        .date-btn:hover {
-            border-color: var(--primary);
-            color: var(--text-primary);
-        }
-        .date-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-        }
-
         @media (max-width: 768px) {
             h1 { font-size: 2em; }
             .header-content { flex-direction: column; align-items: flex-start; }
@@ -448,8 +420,6 @@
             .search-box { max-width: none; }
             .news-grid { grid-template-columns: 1fr; }
             .stats-bar { gap: 16px; }
-            .date-filter { gap: 8px; }
-            .date-btn { padding: 8px 16px; font-size: 13px; }
         }
     </style>
 </head>
@@ -463,11 +433,7 @@
                     <div class="stats-bar">
                         <div class="stat-item">
                             <span class="stat-value" id="totalNews">48</span>
-                            <span class="stat-label">资讯总数</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="todayNews">12</span>
-                            <span class="stat-label">今日更新</span>
+                            <span class="stat-label">今日资讯</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-value" id="totalShares">1,234</span>
@@ -489,14 +455,6 @@
         </header>
 
         <div class="categories" id="categories"></div>
-        
-        <!-- Date Filter Tabs -->
-        <div class="date-filter" id="dateFilter">
-            <button class="date-btn active" data-period="today" onclick="filterByDate('today')">📅 今日资讯</button>
-            <button class="date-btn" data-period="week" onclick="filterByDate('week')">📆 本周</button>
-            <button class="date-btn" data-period="archive" onclick="filterByDate('archive')">📚 往期时事</button>
-        </div>
-        
         <div class="news-grid" id="newsGrid"></div>
 
         <footer>
@@ -558,28 +516,66 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // News data will be loaded from JSON file
-        let newsData = [];
-        let currentCategory = '全部';
-        let currentDateFilter = 'today';
-        let currentNews = null;
-
-        // Load news data from JSON file
-        async function loadNewsData() {
-            try {
-                const response = await fetch('news-data.json');
-                newsData = await response.json();
-                init();
-            } catch (error) {
-                console.error('Failed to load news data:', error);
-                showToast('❌ 加载新闻失败，请刷新页面');
+        // News data with rich content
+        const newsData = [
+            {
+                id: 1,
+                title: "OpenAI发布GPT-5 Turbo，推理速度提升3倍",
+                category: "大模型",
+                excerpt: "OpenAI今日正式发布GPT-5 Turbo，在保持同等智能水平的同时，推理速度提升了3倍，成本降低50%。新模型支持128K上下文窗口，并增强了代码生成能力。",
+                content: "OpenAI在今日的开发者大会上正式发布了GPT-5 Turbo，这是继GPT-4之后的又一重大升级。\n\n核心改进包括：\n• 推理速度提升3倍，响应时间从平均2秒降至0.7秒\n• API调用成本降低50%，使大规模应用更加经济\n• 上下文窗口扩展至128K，可以处理更长的文档和对话历史\n• 代码生成能力显著增强，支持更多编程语言和复杂算法\n• 多模态理解能力提升，图像识别准确率提高15%\n\n业界专家认为，这次发布将进一步推动AI应用的普及，特别是在需要快速响应的实时交互场景中。多家科技公司已宣布将集成GPT-5 Turbo到他们的产品中。",
+                time: "2小时前",
+                views: 15234,
+                isNew: true
+            },
+            {
+                id: 2,
+                title: "Anthropic推出Claude 3.5 Opus，数学推理能力超越人类专家",
+                category: "大模型",
+                excerpt: "Claude 3.5 Opus在MATH基准测试中取得92.5%的准确率，首次超越人类数学专家平均水平。新模型还增强了长文本理解和逻辑推理能力。",
+                content: "Anthropic公司发布了其最新的语言模型Claude 3.5 Opus，在多个权威基准测试中创下新高。\n\n关键突破：\n• MATH基准测试准确率达到92.5%，超越人类专家平均水平（约85%）\n• GSM8K数学推理测试得分98.2%，接近完美\n• 长文本理解能力提升，可准确分析10万字以上的技术文档\n• 逻辑推理错误率降低40%，在复杂论证中表现更加稳定\n• 安全性显著提升，有害内容生成率降至0.1%以下\n\n该模型已在金融分析、科学研究和法律推理等领域开始应用。分析师预测，这将加速AI在高价值专业领域的落地。",
+                time: "3小时前",
+                views: 12876,
+                isNew: true
+            },
+            {
+                id: 3,
+                title: "Stability AI开源Stable Diffusion 3.5，图像生成质量大幅提升",
+                category: "AI工具",
+                excerpt: "Stable Diffusion 3.5采用新的架构设计，在图像细节、文字渲染和构图合理性方面都有显著改进。模型完全开源，支持商业使用。",
+                content: "Stability AI今日开源了Stable Diffusion 3.5，这是目前最先进的开源图像生成模型。\n\n主要特性：\n• 采用新的Diffusion Transformer架构，图像质量提升明显\n• 文字渲染能力大幅改善，可以准确生成包含复杂文字的图像\n• 构图更加合理，减少了以往版本中常见的结构错误\n• 支持多种分辨率，最高可达4K输出\n• 完全开源，采用Apache 2.0许可证，允许商业使用\n• 提供多种尺寸模型，从1B到8B参数可选\n\n社区反应热烈，已有多个项目基于SD 3.5构建了图像编辑、设计辅助等应用。这标志着开源AI图像生成进入新阶段。",
+                time: "4小时前",
+                views: 9543,
+                isNew: true
+            },
+            {
+                id: 4,
+                title: "Google DeepMind发表Nature论文：AI系统实现蛋白质结构预测新突破",
+                category: "学术研究",
+                excerpt: "DeepMind团队在Nature发表论文，介绍AlphaFold 3的最新进展，能够预测蛋白质-配体复合物的结构，准确度达到实验级别。",
+                content: "Google DeepMind的研究团队在顶级期刊Nature上发表了关于AlphaFold 3的重要研究成果。\n\n研究亮点：\n• 首次实现蛋白质-配体复合物的高精度结构预测\n• 对药物分子与蛋白质结合位点的预测准确度达85%\n• 相比AlphaFold 2，整体预测误差降低30%\n• 可扩展到抗体、核酸等其他生物大分子的结构预测\n• 数据库已更新至包含超过2亿个蛋白质结构预测\n\n这一突破将极大加速新药研发进程。多家制药公司已表示将与DeepMind合作，利用AlphaFold 3进行药物设计。预计可将早期药物发现周期从数年缩短至数月。",
+                time: "5小时前",
+                views: 8234,
+                isNew: false
+            },
+            {
+                id: 5,
+                title: "微软推出Copilot Studio，企业可自定义AI助手",
+                category: "AI应用",
+                excerpt: "微软发布Copilot Studio，让企业无需编程即可创建定制化的AI助手，可连接企业内部数据和业务流程。",
+                content: "微软在Ignite大会上推出了Copilot Studio，这是一个低代码平台，帮助企业构建专属的AI助手。\n\n核心功能：\n• 可视化界面，拖拽式配置，无需编写代码\n• 可连接SharePoint、SQL Server等企业数据源\n• 支持自定义知识库和业务流程\n• 内置安全机制，确保数据访问合规\n• 支持多语言，覆盖全球市场\n\n该平台已获得多家世界500强企业的采用。分析师认为，这将降低企业AI应用门槛，加速数字化转型。",
+                time: "6小时前",
+                views: 7654,
+                isNew: false
             }
-        }
+        ];
+
+        let currentCategory = '全部';
+        let currentNews = null;
 
         // Initialize page
         function init() {
             renderCategories();
-            renderDateFilter();
             renderNews();
             setupSearch();
             updateStats();
@@ -611,62 +607,14 @@
             renderNews();
         }
 
-        // Render date filter buttons
-        function renderDateFilter() {
-            const today = new Date().toISOString().split('T')[0];
-            const todayCount = newsData.filter(n => n.date === today).length;
-            document.getElementById('todayNews').textContent = todayCount;
-        }
-
-        // Filter news by date period
-        function filterByDate(period) {
-            currentDateFilter = period;
-            
-            // Update active button
-            document.querySelectorAll('.date-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.period === period);
-            });
-            
-            renderNews();
-        }
-
-        // Get filtered news based on category and date
-        function getFilteredNews() {
-            let filtered = newsData;
-            
-            // Apply date filter
-            const today = new Date().toISOString().split('T')[0];
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-            const weekStart = oneWeekAgo.toISOString().split('T')[0];
-            
-            if (currentDateFilter === 'today') {
-                filtered = filtered.filter(n => n.date === today);
-            } else if (currentDateFilter === 'week') {
-                filtered = filtered.filter(n => n.date >= weekStart);
-            } else if (currentDateFilter === 'archive') {
-                filtered = filtered.filter(n => n.date < weekStart);
-            }
-            
-            // Apply category filter
-            if (currentCategory !== '全部') {
-                filtered = filtered.filter(n => n.category === currentCategory);
-            }
-            
-            return filtered;
-        }
-
         // Render news cards
         function renderNews() {
             const grid = document.getElementById('newsGrid');
             grid.innerHTML = '';
             
-            const filtered = getFilteredNews();
-            
-            if (filtered.length === 0) {
-                grid.innerHTML = '<div style=\"text-align: center; padding: 60px 20px; color: var(--text-muted);\"><p style=\"font-size: 48px; margin-bottom: 16px;\">📭</p><p style=\"font-size: 18px;\">暂无相关资讯</p></div>';
-                return;
-            }
+            const filtered = currentCategory === '全部' 
+                ? newsData 
+                : newsData.filter(n => n.category === currentCategory);
             
             filtered.forEach(news => {
                 const card = createNewsCard(news);
@@ -864,8 +812,8 @@
             }
         });
 
-        // Load news data and initialize on page load
-        loadNewsData();
+        // Initialize on load
+        init();
     </script>
 </body>
 </html>
