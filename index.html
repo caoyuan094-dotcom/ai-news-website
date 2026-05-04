@@ -12,6 +12,9 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://caoyuan094-dotcom.github.io/ai-news-website/">
     
+    <!-- QRCode.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
     <style>
         :root {
             --primary: #5E6AD2;
@@ -346,16 +349,26 @@
         }
 
         .poster-qr {
-            width: 120px;
-            height: 120px;
             background: white;
-            border-radius: 8px;
-            margin: 0 auto;
+            border-radius: 12px;
+            margin: 20px auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        #qrcode-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #333;
-            font-size: 12px;
+        }
+        
+        #qrcode-container img {
+            display: block;
+            border-radius: 4px;
         }
 
         .poster-actions {
@@ -487,7 +500,8 @@
                 <div class="poster-title" id="posterTitle"></div>
                 <div class="poster-excerpt" id="posterExcerpt"></div>
                 <div class="poster-qr">
-                    <div>扫码阅读全文</div>
+                    <div id="qrcode-container"></div>
+                    <div style="margin-top: 8px; font-size: 12px;">微信扫码阅读全文</div>
                 </div>
             </div>
             <p style="color: #666; margin-bottom: 20px; font-size: 14px;">长按保存图片，分享到朋友圈更有吸引力</p>
@@ -651,11 +665,29 @@
         }
 
         // Generate share poster
+        // Generate share poster with QR code
         function generatePoster() {
             if (!currentNews) return;
             
             document.getElementById('posterTitle').textContent = currentNews.title;
             document.getElementById('posterExcerpt').textContent = currentNews.excerpt;
+            
+            // Clear previous QR code
+            const qrContainer = document.getElementById('qrcode-container');
+            qrContainer.innerHTML = '';
+            
+            // Generate QR code for current article
+            const articleUrl = window.location.href.split('#')[0] + '#article-' + currentNews.id;
+            
+            new QRCode(qrContainer, {
+                text: articleUrl,
+                width: 180,
+                height: 180,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
             document.getElementById('posterModal').classList.add('active');
         }
 
