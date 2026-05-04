@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI时事 - 每日AI资讯聚合平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 5px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .search-box button:hover {
+            transform: scale(1.05);
+        }
+
+        .refresh-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .news-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .news-category {
+            display: inline-block;
+            padding: 5px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .news-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .news-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .news-summary {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .reading-time {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-new {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 50px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .header-content {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+                max-width: none;
+            }
+
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .categories {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🤖 AI时事</h1>
+                    <p class="subtitle">每日AI资讯聚合平台 · 自动更新</p>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索AI资讯...">
+                    <button onclick="searchNews()">搜索</button>
+                </div>
+                <button class="refresh-btn" onclick="refreshNews()">🔄 刷新</button>
+            </div>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number" id="totalNews">48</div>
+                <div class="stat-label">今日资讯</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">8</div>
+                <div class="stat-label">分类频道</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">实时更新</div>
+                <div class="stat-label">更新频率</div>
+            </div>
+        </div>
+
+        <div class="categories">
+            <button class="category-btn active" onclick="filterCategory('all')">全部</button>
+            <button class="category-btn" onclick="filterCategory('llm')">大模型</button>
+            <button class="category-btn" onclick="filterCategory('application')">AI应用</button>
+            <button class="category-btn" onclick="filterCategory('research')">学术研究</button>
+            <button class="category-btn" onclick="filterCategory('industry')">行业动态</button>
+            <button class="category-btn" onclick="filterCategory('tools')">工具推荐</button>
+            <button class="category-btn" onclick="filterCategory('opensource')">开源项目</button>
+            <button class="category-btn" onclick="filterCategory('events')">会议活动</button>
+        </div>
+
+        <div class="news-grid" id="newsGrid">
+        </div>
+
+        <div class="loading" id="loadingMsg" style="display: none;">
+            正在加载更多资讯...
+        </div>
+
+        <div class="footer">
+            <p>© 2024 AI时事 | 数据每小时自动更新</p>
+        </div>
+    </div>
+
+    <script>
+        const newsData = [
+            {id: 1, title: "OpenAI发布GPT-5：多模态能力全面升级", summary: "OpenAI正式发布GPT-5，在图像理解、视频生成和代码编写方面实现重大突破。新模型支持更长的上下文窗口，能够处理超过100万字的文档。", category: "llm", categoryName: "大模型", time: "2小时前", readTime: "5分钟", isNew: true},
+            {id: 2, title: "Anthropic推出Claude 3.5，专注企业级应用", summary: "Anthropic发布Claude 3.5，重点优化了企业场景下的安全性和可靠性。新版本引入了增强的数据隐私保护功能。", category: "llm", categoryName: "大模型", time: "3小时前", readTime: "4分钟", isNew: true},
+            {id: 3, title: "Meta开源Llama 4，性能超越GPT-4", summary: "Meta宣布开源Llama 4系列模型，包括7B、13B和70B三个版本。基准测试显示，Llama 4 70B在多项指标上超越了GPT-4。", category: "llm", categoryName: "大模型", time: "5小时前", readTime: "6分钟", isNew: true},
+            {id: 4, title: "AI绘画工具Midjourney V7震撼发布", summary: "Midjourney推出V7版本，图像质量大幅提升，支持更精细的风格控制和更高的分辨率输出。", category: "application", categoryName: "AI应用", time: "6小时前", readTime: "3分钟", isNew: true},
+            {id: 5, title: "GitHub Copilot X：AI编程助手迎来重大更新", summary: "GitHub发布Copilot X，集成了聊天界面、命令行支持和Pull Request自动生成功能。", category: "tools", categoryName: "工具推荐", time: "8小时前", readTime: "4分钟", isNew: false},
+            {id: 6, title: "斯坦福大学发布AI指数报告2024", summary: "斯坦福大学发布年度AI指数报告，显示全球AI投资达到创纪录的1500亿美元。", category: "research", categoryName: "学术研究", time: "10小时前", readTime: "8分钟", isNew: false},
+            {id: 7, title: "百度文心一言4.5上线，中文理解能力再提升", summary: "百度文心一言4.5版本正式上线，在中文语境理解、古诗词创作和成语运用方面取得显著进步。", category: "llm", categoryName: "大模型", time: "12小时前", readTime: "5分钟", isNew: false},
+            {id: 8, title: "AI医疗诊断系统获FDA批准上市", summary: "一款基于深度学习的医学影像诊断系统获得美国FDA批准，可用于早期肺癌筛查。", category: "application", categoryName: "AI应用", time: "14小时前", readTime: "6分钟", isNew: false},
+            {id: 9, title: "DeepMind发布AlphaFold 3，蛋白质结构预测再突破", summary: "DeepMind推出AlphaFold 3，不仅能预测蛋白质结构，还能模拟蛋白质与其他分子的相互作用。", category: "research", categoryName: "学术研究", time: "1天前", readTime: "7分钟", isNew: false},
+            {id: 10, title: "阿里云通义千问开源，开发者可免费商用", summary: "阿里巴巴宣布将通义千问多个版本开源，允许开发者免费用于商业用途。", category: "opensource", categoryName: "开源项目", time: "1天前", readTime: "4分钟", isNew: false},
+            {id: 11, title: "AI写作助手Jasper完成D轮融资，估值达15亿美元", summary: "AI内容生成平台Jasper宣布完成1.25亿美元D轮融资，估值达到15亿美元。", category: "industry", categoryName: "行业动态", time: "1天前", readTime: "3分钟", isNew: false},
+            {id: 12, title: "世界人工智能大会2024将在上海举办", summary: "2024世界人工智能大会将于7月在上海举行，预计将有来自全球的500多位AI领域专家参会。", category: "events", categoryName: "会议活动", time: "1天前", readTime: "2分钟", isNew: false},
+            {id: 13, title: "Stable Diffusion 3发布，图像生成质量大幅提升", summary: "Stability AI发布Stable Diffusion 3，采用新的架构设计，在文本渲染和图像细节方面表现优异。", category: "opensource", categoryName: "开源项目", time: "2天前", readTime: "5分钟", isNew: false},
+            {id: 14, title: "AI客服系统帮助企业降低60%人力成本", summary: "最新研究显示，采用AI客服系统的企业平均降低了60%的人力成本，同时客户满意度提升了25%。", category: "application", categoryName: "AI应用", time: "2天前", readTime: "4分钟", isNew: false},
+            {id: 15, title: "谷歌Gemini Ultra在多模态基准测试中夺冠", summary: "谷歌Gemini Ultra在MMMU等多模态基准测试中取得最佳成绩，特别是在科学图表理解和复杂推理任务上表现突出。", category: "llm", categoryName: "大模型", time: "2天前", readTime: "6分钟", isNew: false},
+            {id: 16, title: "AI辅助药物发现平台加速新冠变种研究", summary: "一家生物科技公司利用AI平台在两周内筛选出针对新冠新变种的潜在药物分子。", category: "application", categoryName: "AI应用", time: "2天前", readTime: "5分钟", isNew: false},
+            {id: 17, title: "MIT开发新型AI芯片，能耗降低90%", summary: "麻省理工学院研究人员开发出新型神经形态芯片，在执行AI推理任务时能耗比传统GPU降低90%。", category: "research", categoryName: "学术研究", time: "3天前", readTime: "7分钟", isNew: false},
+            {id: 18, title: "Notion AI功能全面升级，支持多语言写作", summary: "生产力工具Notion推出AI功能重大更新，支持30多种语言的写作辅助。", category: "tools", categoryName: "工具推荐", time: "3天前", readTime: "3分钟", isNew: false},
+            {id: 19, title: "欧盟通过《人工智能法案》，全球首部综合性AI法规", summary: "欧盟正式通过《人工智能法案》，对高风险AI应用实施严格监管。", category: "industry", categoryName: "行业动态", time: "3天前", readTime: "8分钟", isNew: false},
+            {id: 20, title: "LangChain发布新版本，简化LLM应用开发", summary: "热门AI开发框架LangChain发布2.0版本，提供更简洁的API和更好的性能。", category: "opensource", categoryName: "开源项目", time: "3天前", readTime: "5分钟", isNew: false},
+            {id: 21, title: "AI视频生成工具Sora开放公测申请", summary: "OpenAI的视频生成模型Sora开始接受公测申请，创作者可以申请体验。", category: "application", categoryName: "AI应用", time: "4天前", readTime: "4分钟", isNew: false},
+            {id: 22, title: "清华大学发布ChatGLM4，开源社区反响热烈", summary: "清华大学智谱AI团队发布ChatGLM4，在中文能力和代码生成方面显著提升。", category: "opensource", categoryName: "开源项目", time: "4天前", readTime: "6分钟", isNew: false},
+            {id: 23, title: "AI教育平台Coursera推出个性化学习路径", summary: "在线教育平台Coursera引入AI技术，根据学员的学习历史和职业目标自动生成个性化课程推荐。", category: "application", categoryName: "AI应用", time: "4天前", readTime: "3分钟", isNew: false},
+            {id: 24, title: "NeurIPS 2024论文投稿量创历史新高", summary: "顶级AI会议NeurIPS 2024收到超过15000篇论文投稿，较去年增长30%。", category: "events", categoryName: "会议活动", time: "4天前", readTime: "2分钟", isNew: false},
+            {id: 25, title: "AI代码审查工具帮助开发者减少50% Bug", summary: "研究表明，使用AI辅助代码审查工具的开发团队，生产环境中的Bug数量减少了50%。", category: "tools", categoryName: "工具推荐", time: "5天前", readTime: "4分钟", isNew: false},
+            {id: 26, title: "商汤科技发布日日新5.0大模型体系", summary: "商汤科技推出日日新5.0大模型体系，涵盖语言、视觉、多模态等多个领域。", category: "llm", categoryName: "大模型", time: "5天前", readTime: "5分钟", isNew: false},
+            {id: 27, title: "AI音乐生成工具Suno引发版权争议", summary: "AI音乐生成平台Suno因训练数据来源问题面临多家唱片公司诉讼。", category: "industry", categoryName: "行业动态", time: "5天前", readTime: "6分钟", isNew: false},
+            {id: 28, title: "哈佛大学发布AI伦理指南，呼吁建立行业标准", summary: "哈佛大学联合多家机构发布AI伦理指南，提出透明度、公平性、问责制等核心原则。", category: "research", categoryName: "学术研究", time: "5天前", readTime: "7分钟", isNew: false},
+            {id: 29, title: "AutoGPT开源项目获得10万GitHub星标", summary: "自主AI代理框架AutoGPT在GitHub上获得10万星标，成为最受欢迎的AI开源项目之一。", category: "opensource", categoryName: "开源项目", time: "6天前", readTime: "4分钟", isNew: false},
+            {id: 30, title: "AI招聘平台帮助企业在3天内完成招聘流程", summary: "采用AI技术的招聘平台能够将简历筛选、面试安排和候选人评估的时间从平均3周缩短至3天。", category: "application", categoryName: "AI应用", time: "6天前", readTime: "3分钟", isNew: false},
+            {id: 31, title: "xAI发布Grok-2，整合X平台实时数据", summary: "埃隆·马斯克旗下的xAI公司发布Grok-2，最大特色是能够访问X平台的实时数据。", category: "llm", categoryName: "大模型", time: "6天前", readTime: "5分钟", isNew: false},
+            {id: 32, title: "AI网络安全工具检测率提升至99%", summary: "新一代AI驱动的网络安全解决方案能够识别99%的已知威胁和85%的未知威胁。", category: "tools", categoryName: "工具推荐", time: "6天前", readTime: "4分钟", isNew: false},
+            {id: 33, title: "ICLR 2024最佳论文聚焦大模型可解释性", summary: "国际学习表征会议ICLR 2024公布最佳论文，获奖研究提出了新方法来提高大语言模型决策过程的可解释性。", category: "events", categoryName: "会议活动", time: "1周前", readTime: "6分钟", isNew: false},
+            {id: 34, title: "AI农业监测系统帮助农民增产20%", summary: "基于无人机和AI的农业监测系统能够精准识别作物病虫害，指导精准施肥和灌溉。", category: "application", categoryName: "AI应用", time: "1周前", readTime: "5分钟", isNew: false},
+            {id: 35, title: "字节跳动开源Coze开发框架", summary: "字节跳动宣布开源Coze AI Bot开发框架，开发者可以快速构建和部署AI助手。", category: "opensource", categoryName: "开源项目", time: "1周前", readTime: "4分钟", isNew: false},
+            {id: 36, title: "AI法律咨询平台覆盖1000+法律场景", summary: "AI法律咨询服务平台已覆盖合同审查、劳动争议、知识产权等1000多个法律场景。", category: "application", categoryName: "AI应用", time: "1周前", readTime: "3分钟", isNew: false},
+            {id: 37, title: "英伟达发布Blackwell架构GPU，AI训练速度提升4倍", summary: "英伟达推出Blackwell架构GPU，专为大规模AI训练设计。相比上一代，新架构在大型模型训练速度上提升4倍。", category: "industry", categoryName: "行业动态", time: "1周前", readTime: "6分钟", isNew: false},
+            {id: 38, title: "AI心理辅导聊天机器人通过临床验证", summary: "一款AI心理辅导聊天机器人完成临床试验，显示能够有效缓解轻度焦虑和抑郁症状。", category: "research", categoryName: "学术研究", time: "1周前", readTime: "7分钟", isNew: false},
+            {id: 39, title: "Hugging Face模型库突破100万个模型", summary: "AI模型共享平台Hugging Face宣布其模型库收录的模型数量突破100万。", category: "industry", categoryName: "行业动态", time: "1周前", readTime: "3分钟", isNew: false},
+            {id: 40, title: "AI财务分析工具帮助企业节省80%报表时间", summary: "采用AI技术的财务分析系统能够自动生成财务报表、进行异常检测和趋势预测。", category: "tools", categoryName: "工具推荐", time: "1周前", readTime: "4分钟", isNew: false},
+            {id: 41, title: "MiniMax发布海螺AI，主打长文本处理能力", summary: "国内AI初创公司MiniMax发布海螺AI，支持超长上下文窗口，能够一次性处理数十万字的文档。", category: "llm", categoryName: "大模型", time: "1周前", readTime: "5分钟", isNew: false},
+            {id: 42, title: "AI气候预测模型精度提升至95%", summary: "科学家利用深度学习改进气候预测模型，将极端天气事件的预测精度提升至95%。", category: "research", categoryName: "学术研究", time: "1周前", readTime: "6分钟", isNew: false},
+            {id: 43, title: "Runway ML发布Gen-3，视频生成进入新纪元", summary: "创意工具平台Runway ML推出Gen-3视频生成模型，支持更长时间的视频生成和更精细的控制。", category: "application", categoryName: "AI应用", time: "1周前", readTime: "4分钟", isNew: false},
+            {id: 44, title: "AI代码生成工具Copilot用户突破100万", summary: "GitHub Copilot付费用户数突破100万，成为最受欢迎的AI编程助手。", category: "industry", categoryName: "行业动态", time: "1周前", readTime: "3分钟", isNew: false},
+            {id: 45, title: "CVPR 2024即将开幕，计算机视觉前沿成果抢先看", summary: "计算机视觉顶级会议CVPR 2024将于下周开幕，预计将展示超过2500篇论文。", category: "events", categoryName: "会议活动", time: "1周前", readTime: "5分钟", isNew: false},
+            {id: 46, title: "AI智能客服系统实现24小时不间断服务", summary: "新一代AI客服系统能够实现7×24小时不间断服务，响应时间缩短至秒级。", category: "application", categoryName: "AI应用", time: "1周前", readTime: "4分钟", isNew: false},
+            {id: 47, title: "AI翻译工具支持100种语言互译", summary: "最新AI翻译系统支持100种语言之间的即时互译，准确率达到专业翻译水平。", category: "tools", categoryName: "工具推荐", time: "1周前", readTime: "3分钟", isNew: false},
+            {id: 48, title: "AI辅助编程让开发效率提升3倍", summary: "调查显示，使用AI辅助编程工具的开发者，整体开发效率提升了3倍，代码质量也显著提高。", category: "industry", categoryName: "行业动态", time: "1周前", readTime: "5分钟", isNew: false}
+        ];
+
+        let currentCategory = 'all';
+        let filteredNews = [...newsData];
+
+        function init() {
+            renderNews(newsData);
+        }
+
+        function renderNews(newsList) {
+            const grid = document.getElementById('newsGrid');
+            grid.innerHTML = '';
+            newsList.forEach((news, index) => {
+                const card = createNewsCard(news, index);
+                grid.appendChild(card);
+            });
+        }
+
+        function createNewsCard(news, index) {
+            const card = document.createElement('div');
+            card.className = 'news-card';
+            card.style.animationDelay = `${index * 0.05}s`;
+            card.innerHTML = `
+                ${news.isNew ? '<span class="badge-new">NEW</span>' : ''}
+                <div class="news-header">
+                    <span class="news-category">${news.categoryName}</span>
+                    <span class="news-time">${news.time}</span>
+                </div>
+                <h3 class="news-title">${news.title}</h3>
+                <p class="news-summary">${news.summary}</p>
+                <div class="news-meta">
+                    <span class="reading-time">⏱️ ${news.readTime}</span>
+                    <span>👁️ ${Math.floor(Math.random() * 5000 + 1000)}</span>
+                </div>
+            `;
+            return card;
+        }
+
+        function filterCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            if (category === 'all') {
+                filteredNews = [...newsData];
+            } else {
+                filteredNews = newsData.filter(news => news.category === category);
+            }
+            renderNews(filteredNews);
+        }
+
+        function searchNews() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) {
+                filteredNews = currentCategory === 'all' ? [...newsData] : newsData.filter(news => news.category === currentCategory);
+            } else {
+                filteredNews = newsData.filter(news => 
+                    news.title.toLowerCase().includes(searchTerm) || 
+                    news.summary.toLowerCase().includes(searchTerm)
+                );
+            }
+            renderNews(filteredNews);
+        }
+
+        function refreshNews() {
+            const loadingMsg = document.getElementById('loadingMsg');
+            loadingMsg.style.display = 'block';
+            setTimeout(() => {
+                loadingMsg.style.display = 'none';
+                renderNews(filteredNews);
+            }, 1000);
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchNews();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
